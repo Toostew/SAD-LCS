@@ -67,7 +67,7 @@ def login_view(page: ft.Page, auth_service: AuthService, on_login_success):
         if not username or not password:
             page.snack_bar = ft.SnackBar(
                 content=ft.Text("Please enter both username and password"),
-                bgcolor=ft.colors.RED_400,
+                bgcolor=ft.Colors.RED_400,
             )
             page.snack_bar.open = True
             page.update()
@@ -80,7 +80,7 @@ def login_view(page: ft.Page, auth_service: AuthService, on_login_success):
             # Authentication failed — show error message
             page.snack_bar = ft.SnackBar(
                 content=ft.Text("Invalid username or password"),
-                bgcolor=ft.colors.RED_400,
+                bgcolor=ft.Colors.RED_400,
             )
             page.snack_bar.open = True
             page.update()
@@ -90,7 +90,7 @@ def login_view(page: ft.Page, auth_service: AuthService, on_login_success):
 
     # Create the submit button
     login_button = ft.ElevatedButton(
-        text="Login",
+        content="Login",
         width=300,
         on_click=handle_login,
     )
@@ -106,7 +106,7 @@ def login_view(page: ft.Page, auth_service: AuthService, on_login_success):
             ft.Text(
                 "Please log in to continue",
                 size=16,
-                color=ft.colors.GREY_700,
+                color=ft.Colors.GREY_700,
             ),
             ft.Container(height=20),
             username_field,

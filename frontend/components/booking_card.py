@@ -69,7 +69,7 @@ def booking_card(booking, student_name="", lecturer_name="", on_accept=None, on_
     status_badge = ft.Container(
         content=ft.Text(badge_text, size=12, color=ft.Colors.WHITE, weight=ft.FontWeight.W_500),
         bgcolor=badge_color,
-        padding=ft.padding.symmetric(horizontal=10, vertical=4),
+        padding=ft.Padding.symmetric(horizontal=10, vertical=4),
         border_radius=ft.border_radius.all(12),
     )
 
@@ -117,7 +117,7 @@ def booking_card(booking, student_name="", lecturer_name="", on_accept=None, on_
 
     return ft.Container(
         content=card_content,
-        padding=ft.padding.all(12),
+        padding=ft.Padding.all(12),
         border=ft.border.all(1, ft.Colors.OUTLINE),
         border_radius=ft.border_radius.all(8),
         width=350,

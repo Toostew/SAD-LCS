@@ -216,7 +216,7 @@ def availability_view(page: ft.Page, user, availability_service):
 
     # Add Slot button
     add_button = ft.ElevatedButton(
-        text="Add Slot",
+        content="Add Slot",
         icon=ft.Icons.ADD,
         on_click=handle_add,
     )

@@ -49,8 +49,8 @@ def student_dashboard(
     """
     # Define navigation destinations for student features
     nav_items = [
-        {"label": "Book Consultation", "icon": ft.icons.CALENDAR_MONTH},
-        {"label": "Edit Proposals", "icon": ft.icons.EDIT_NOTE},
+        {"label": "Book Consultation", "icon": ft.Icons.CALENDAR_MONTH},
+        {"label": "Edit Proposals", "icon": ft.Icons.EDIT_NOTE},
     ]
 
     # Content area that displays the selected section's actual view
@@ -135,17 +135,17 @@ def student_dashboard(
                     weight=ft.FontWeight.BOLD,
                 ),
                 ft.Container(expand=True),
-                ft.Text("Student", size=14, color=ft.colors.GREY_600),
+                ft.Text("Student", size=14, color=ft.Colors.GREY_600),
                 ft.ElevatedButton(
-                    text="Logout",
-                    icon=ft.icons.LOGOUT,
+                    content="Logout",
+                    icon=ft.Icons.LOGOUT,
                     on_click=lambda e: on_logout(),
                 ),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         ),
-        padding=ft.padding.symmetric(horizontal=20, vertical=10),
-        bgcolor=ft.colors.BLUE_50,
+        padding=ft.Padding.symmetric(horizontal=20, vertical=10),
+        bgcolor=ft.Colors.BLUE_50,
     )
 
     # Assemble the full dashboard layout

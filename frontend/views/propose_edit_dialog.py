@@ -141,7 +141,7 @@ def show_propose_edit_dialog(page, booking, edit_proposal_service, availability_
                 tight=True,
             ),
             width=400,
-            padding=ft.padding.only(top=10),
+            padding=ft.Padding.only(top=10),
         ),
         actions=[
             ft.TextButton("Cancel", on_click=handle_cancel),

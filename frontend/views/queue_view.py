@@ -77,7 +77,7 @@ def queue_view(page, user, booking_service, availability_service, user_repo_modu
                     ],
                     spacing=8,
                 ),
-                padding=ft.padding.only(bottom=8, top=4),
+                padding=ft.Padding.only(bottom=8, top=4),
             )
 
             # Build booking cards for each queued booking
@@ -164,7 +164,7 @@ def queue_view(page, user, booking_service, availability_service, user_repo_modu
                             ],
                             spacing=6,
                         ),
-                        padding=ft.padding.only(top=4, bottom=4),
+                        padding=ft.Padding.only(top=4, bottom=4),
                     )
                 )
 
@@ -174,7 +174,7 @@ def queue_view(page, user, booking_service, availability_service, user_repo_modu
                     controls=[slot_header] + limit_warning + booking_cards,
                     spacing=10,
                 ),
-                padding=ft.padding.all(12),
+                padding=ft.Padding.all(12),
                 border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
                 border_radius=ft.border_radius.all(8),
             )
@@ -197,8 +197,8 @@ def queue_view(page, user, booking_service, availability_service, user_repo_modu
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=12,
                         ),
-                        alignment=ft.alignment.center,
-                        padding=ft.padding.all(40),
+                        alignment=ft.Alignment.CENTER,
+                        padding=ft.Padding.all(40),
                     )
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -226,7 +226,7 @@ def queue_view(page, user, booking_service, availability_service, user_repo_modu
             size=20,
             weight=ft.FontWeight.BOLD,
         ),
-        padding=ft.padding.only(bottom=12),
+        padding=ft.Padding.only(bottom=12),
     )
 
     # Initial content build
@@ -241,6 +241,6 @@ def queue_view(page, user, booking_service, availability_service, user_repo_modu
 
     return ft.Container(
         content=view_layout,
-        padding=ft.padding.all(20),
+        padding=ft.Padding.all(20),
         expand=True,
     )

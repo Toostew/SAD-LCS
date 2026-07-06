@@ -45,8 +45,8 @@ def lecturer_dashboard(
     """
     # Define navigation destinations for lecturer features
     nav_items = [
-        {"label": "My Availability", "icon": ft.icons.SCHEDULE},
-        {"label": "Booking Requests", "icon": ft.icons.INBOX},
+        {"label": "My Availability", "icon": ft.Icons.SCHEDULE},
+        {"label": "Booking Requests", "icon": ft.Icons.INBOX},
     ]
 
     # Content area that displays the selected section's actual view
@@ -130,17 +130,17 @@ def lecturer_dashboard(
                     weight=ft.FontWeight.BOLD,
                 ),
                 ft.Container(expand=True),
-                ft.Text("Lecturer", size=14, color=ft.colors.GREY_600),
+                ft.Text("Lecturer", size=14, color=ft.Colors.GREY_600),
                 ft.ElevatedButton(
-                    text="Logout",
-                    icon=ft.icons.LOGOUT,
+                    content="Logout",
+                    icon=ft.Icons.LOGOUT,
                     on_click=lambda e: on_logout(),
                 ),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         ),
-        padding=ft.padding.symmetric(horizontal=20, vertical=10),
-        bgcolor=ft.colors.GREEN_50,
+        padding=ft.Padding.symmetric(horizontal=20, vertical=10),
+        bgcolor=ft.Colors.GREEN_50,
     )
 
     # Assemble the full dashboard layout

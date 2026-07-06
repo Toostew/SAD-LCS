@@ -54,11 +54,11 @@ def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot
                     content=ft.Text(
                         "No pending edit proposals.",
                         size=16,
-                        color=ft.colors.GREY_600,
+                        color=ft.Colors.GREY_600,
                         italic=True,
                     ),
                     padding=30,
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment.CENTER,
                 )
             )
             page.update()
@@ -128,21 +128,21 @@ def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot
         # Build the proposed changes column
         proposed_column = ft.Column(
             controls=[
-                ft.Text("Proposed Changes", weight=ft.FontWeight.BOLD, size=14, color=ft.colors.BLUE),
+                ft.Text("Proposed Changes", weight=ft.FontWeight.BOLD, size=14, color=ft.Colors.BLUE),
                 ft.Text(
                     f"Date: {proposed_date}",
                     size=13,
-                    color=ft.colors.BLUE if proposal.proposed_time_slot_id else None,
+                    color=ft.Colors.BLUE if proposal.proposed_time_slot_id else None,
                 ),
                 ft.Text(
                     f"Time: {proposed_time}",
                     size=13,
-                    color=ft.colors.BLUE if proposal.proposed_time_slot_id else None,
+                    color=ft.Colors.BLUE if proposal.proposed_time_slot_id else None,
                 ),
                 ft.Text(
                     f"Place: {proposed_place}",
                     size=13,
-                    color=ft.colors.BLUE if proposal.proposed_place else None,
+                    color=ft.Colors.BLUE if proposal.proposed_place else None,
                 ),
             ],
             spacing=5,
@@ -189,15 +189,15 @@ def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot
         action_buttons = ft.Row(
             controls=[
                 ft.ElevatedButton(
-                    text="Accept",
-                    icon=ft.icons.CHECK,
-                    color=ft.colors.WHITE,
-                    bgcolor=ft.colors.GREEN,
+                    content="Accept",
+                    icon=ft.Icons.CHECK,
+                    color=ft.Colors.WHITE,
+                    bgcolor=ft.Colors.GREEN,
                     on_click=on_accept,
                 ),
                 ft.OutlinedButton(
-                    text="Decline",
-                    icon=ft.icons.CLOSE,
+                    content="Decline",
+                    icon=ft.Icons.CLOSE,
                     on_click=on_decline,
                 ),
             ],

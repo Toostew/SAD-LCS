@@ -210,7 +210,7 @@ def booking_view(page, user, booking_service, availability_service, user_repo_mo
             ft.dropdown.Option(key=str(lec.id), text=lec.full_name)
             for lec in lecturers
         ],
-        on_change=on_lecturer_selected,
+        on_text_change=on_lecturer_selected,
     )
 
     # Assemble the complete booking view layout
