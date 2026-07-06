@@ -89,7 +89,7 @@ def time_slot_card(time_slot, status="available", pending_count=0, on_book=None,
     return ft.Container(
         content=card_content,
         padding=ft.Padding.all(12),
-        border=ft.border.all(1, ft.Colors.OUTLINE),
-        border_radius=ft.border_radius.all(8),
+        border=ft.Border.all(1, ft.Colors.OUTLINE),
+        border_radius=ft.BorderRadius.all(8),
         width=300,
     )

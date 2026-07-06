@@ -126,8 +126,7 @@ def booking_view(page, user, booking_service, availability_service, user_repo_mo
                     place=place,
                 )
                 # Close dialog and show success
-                dialog.open = False
-                page.update()
+                page.pop_dialog()
                 show_notification(page, "Booking request submitted successfully!", type="success")
                 # Refresh slots to show updated status
                 load_slots()
@@ -140,8 +139,7 @@ def booking_view(page, user, booking_service, availability_service, user_repo_mo
 
         def on_cancel(e):
             """Closes the booking dialog without creating a booking."""
-            dialog.open = False
-            page.update()
+            page.pop_dialog()
 
         # Build the booking dialog
         dialog = ft.AlertDialog(
@@ -173,9 +171,7 @@ def booking_view(page, user, booking_service, availability_service, user_repo_mo
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
-        page.overlay.append(dialog)
-        dialog.open = True
-        page.update()
+        page.show_dialog(dialog)
 
     def on_lecturer_selected(e):
         """
@@ -210,7 +206,7 @@ def booking_view(page, user, booking_service, availability_service, user_repo_mo
             ft.dropdown.Option(key=str(lec.id), text=lec.full_name)
             for lec in lecturers
         ],
-        on_text_change=on_lecturer_selected,
+        on_select=on_lecturer_selected,
     )
 
     # Assemble the complete booking view layout

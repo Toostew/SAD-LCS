@@ -97,8 +97,7 @@ def show_propose_edit_dialog(page, booking, edit_proposal_service, availability_
                 proposed_place=proposed_place,
             )
             # Close the dialog and notify success
-            dialog.open = False
-            page.update()
+            page.pop_dialog()
             show_notification(page, "Edit proposal submitted successfully.", "success")
             on_done()
         except ValueError:
@@ -115,8 +114,7 @@ def show_propose_edit_dialog(page, booking, edit_proposal_service, availability_
         Returns:
             None
         """
-        dialog.open = False
-        page.update()
+        page.pop_dialog()
 
     # Build the dialog
     dialog = ft.AlertDialog(
@@ -151,6 +149,4 @@ def show_propose_edit_dialog(page, booking, edit_proposal_service, availability_
     )
 
     # Show the dialog on the page
-    page.overlay.append(dialog)
-    dialog.open = True
-    page.update()
+    page.show_dialog(dialog)

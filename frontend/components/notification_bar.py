@@ -34,9 +34,7 @@ def show_notification(page, message, type="info"):
         duration=3000,
     )
 
-    page.overlay.append(snack_bar)
-    snack_bar.open = True
-    page.update()
+    page.show_dialog(snack_bar)
 
 
 def _get_notification_color(notification_type):

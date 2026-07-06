@@ -203,7 +203,7 @@ def availability_view(page: ft.Page, user, availability_service):
     date_pick_button = ft.IconButton(
         icon=ft.Icons.CALENDAR_MONTH,
         tooltip="Pick a date",
-        on_click=lambda e: page.open(date_picker),
+        on_click=lambda e: page.show_dialog(date_picker),
     )
 
     # Dropdown for selecting the start time hour
@@ -216,7 +216,7 @@ def availability_view(page: ft.Page, user, availability_service):
 
     # Add Slot button
     add_button = ft.ElevatedButton(
-        content="Add Slot",
+        "Add Slot",
         icon=ft.Icons.ADD,
         on_click=handle_add,
     )

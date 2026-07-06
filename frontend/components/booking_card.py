@@ -70,7 +70,7 @@ def booking_card(booking, student_name="", lecturer_name="", on_accept=None, on_
         content=ft.Text(badge_text, size=12, color=ft.Colors.WHITE, weight=ft.FontWeight.W_500),
         bgcolor=badge_color,
         padding=ft.Padding.symmetric(horizontal=10, vertical=4),
-        border_radius=ft.border_radius.all(12),
+        border_radius=ft.BorderRadius.all(12),
     )
 
     # Build action buttons
@@ -118,8 +118,8 @@ def booking_card(booking, student_name="", lecturer_name="", on_accept=None, on_
     return ft.Container(
         content=card_content,
         padding=ft.Padding.all(12),
-        border=ft.border.all(1, ft.Colors.OUTLINE),
-        border_radius=ft.border_radius.all(8),
+        border=ft.Border.all(1, ft.Colors.OUTLINE),
+        border_radius=ft.BorderRadius.all(8),
         width=350,
     )
 

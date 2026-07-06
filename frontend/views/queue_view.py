@@ -175,8 +175,8 @@ def queue_view(page, user, booking_service, availability_service, user_repo_modu
                     spacing=10,
                 ),
                 padding=ft.Padding.all(12),
-                border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
-                border_radius=ft.border_radius.all(8),
+                border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+                border_radius=ft.BorderRadius.all(8),
             )
             slot_sections.append(slot_section)
 

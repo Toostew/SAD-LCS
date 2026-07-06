@@ -189,14 +189,14 @@ def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot
         action_buttons = ft.Row(
             controls=[
                 ft.ElevatedButton(
-                    content="Accept",
+                    "Accept",
                     icon=ft.Icons.CHECK,
                     color=ft.Colors.WHITE,
                     bgcolor=ft.Colors.GREEN,
                     on_click=on_accept,
                 ),
                 ft.OutlinedButton(
-                    content="Decline",
+                    "Decline",
                     icon=ft.Icons.CLOSE,
                     on_click=on_decline,
                 ),

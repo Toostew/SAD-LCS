@@ -137,7 +137,7 @@ def student_dashboard(
                 ft.Container(expand=True),
                 ft.Text("Student", size=14, color=ft.Colors.GREY_600),
                 ft.ElevatedButton(
-                    content="Logout",
+                    "Logout",
                     icon=ft.Icons.LOGOUT,
                     on_click=lambda e: on_logout(),
                 ),

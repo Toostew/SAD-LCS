@@ -65,12 +65,10 @@ def login_view(page: ft.Page, auth_service: AuthService, on_login_success):
 
         # Validate that both fields are filled
         if not username or not password:
-            page.snack_bar = ft.SnackBar(
+            page.show_dialog(ft.SnackBar(
                 content=ft.Text("Please enter both username and password"),
                 bgcolor=ft.Colors.RED_400,
-            )
-            page.snack_bar.open = True
-            page.update()
+            ))
             return
 
         # Attempt authentication
@@ -78,19 +76,17 @@ def login_view(page: ft.Page, auth_service: AuthService, on_login_success):
 
         if user is None:
             # Authentication failed — show error message
-            page.snack_bar = ft.SnackBar(
+            page.show_dialog(ft.SnackBar(
                 content=ft.Text("Invalid username or password"),
                 bgcolor=ft.Colors.RED_400,
-            )
-            page.snack_bar.open = True
-            page.update()
+            ))
         else:
             # Authentication succeeded — invoke the success callback
             on_login_success(user)
 
     # Create the submit button
     login_button = ft.ElevatedButton(
-        content="Login",
+        "Login",
         width=300,
         on_click=handle_login,
     )
