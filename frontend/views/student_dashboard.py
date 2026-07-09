@@ -11,6 +11,7 @@ import flet as ft
 
 from backend.models import User
 from frontend.views.booking_view import booking_view
+from frontend.views.my_bookings_view import my_bookings_view
 from frontend.views.edit_proposal_view import edit_proposal_view
 
 
@@ -50,6 +51,7 @@ def student_dashboard(
     # Define navigation destinations for student features
     nav_items = [
         {"label": "Book Consultation", "icon": ft.Icons.CALENDAR_MONTH},
+        {"label": "My Bookings", "icon": ft.Icons.LIST_ALT},
         {"label": "Edit Proposals", "icon": ft.Icons.EDIT_NOTE},
     ]
 
@@ -82,13 +84,25 @@ def student_dashboard(
                 user_repo_module=user_repo_module,
             )
         elif index == 1:
+            # My Bookings — view, edit, and cancel own bookings
+            content_area.content = my_bookings_view(
+                page=page,
+                user=user,
+                booking_service=booking_service,
+                user_repo_module=user_repo_module,
+                timeslot_repo=timeslot_repo,
+                availability_service=availability_service,
+            )
+        elif index == 2:
             # Edit Proposals — respond to lecturer-proposed booking changes
             content_area.content = edit_proposal_view(
                 page=page,
                 user=user,
                 edit_proposal_service=edit_proposal_service,
                 booking_repo=booking_repo,
+                booking_service=booking_service,
                 timeslot_repo=timeslot_repo,
+                availability_service=availability_service,
             )
         else:
             content_area.content = ft.Text("Unknown section", size=16)

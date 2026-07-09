@@ -16,6 +16,7 @@ from backend.services.booking_service import BookingService
 from backend.services.edit_proposal_service import EditProposalService
 from backend.repositories.timeslot_repo import TimeSlotRepository
 from backend.repositories.booking_repo import BookingRepository
+from backend.repositories.template_repo import TemplateRepository
 from backend.repositories import user_repo, edit_proposal_repo
 from frontend.views.login_view import login_view
 from frontend.views.student_dashboard import student_dashboard
@@ -45,10 +46,11 @@ def main(page: ft.Page):
     # Create repository instances
     timeslot_repo = TimeSlotRepository()
     booking_repo = BookingRepository()
+    template_repo = TemplateRepository()
 
     # Create service instances with injected dependencies
     auth_service = AuthService()
-    availability_service = AvailabilityService(timeslot_repo, booking_repo)
+    availability_service = AvailabilityService(timeslot_repo, booking_repo, template_repo)
     booking_service = BookingService(booking_repo, timeslot_repo)
     edit_proposal_service = EditProposalService(edit_proposal_repo, booking_repo)
 

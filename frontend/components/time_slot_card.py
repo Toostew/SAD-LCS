@@ -40,6 +40,12 @@ def time_slot_card(time_slot, status="available", pending_count=0, on_book=None,
         suffix = "request" if pending_count == 1 else "requests"
         indicator_text = f"Queued ({pending_count} pending {suffix})"
         book_enabled = True
+    elif status.startswith("booked:"):
+        # Format: "booked:Student Name" — slot is accepted/booked by a specific student
+        student_name = status[len("booked:"):]
+        indicator_color = ft.Colors.BLUE
+        indicator_text = f"Booked by {student_name}"
+        book_enabled = False
     else:  # "taken"
         indicator_color = ft.Colors.RED
         indicator_text = "Taken"

@@ -144,6 +144,43 @@ class EditProposal:
     created_at: datetime
 
 
+@dataclass
+class WeeklyTemplate:
+    """
+    Represents a recurring weekly availability slot for a lecturer.
+
+    Attributes:
+        id: Unique identifier for the template entry.
+        lecturer_id: ID of the lecturer who owns this template.
+        day_of_week: Day of the week (0=Monday, 4=Friday).
+        start_time: The start time in HH:MM format.
+    """
+
+    id: int
+    lecturer_id: int
+    day_of_week: int  # 0=Monday, 4=Friday
+    start_time: str   # HH:MM format
+
+
+@dataclass
+class AvailabilityException:
+    """
+    Represents a specific date+time that a lecturer marks as unavailable,
+    overriding their weekly template for that occurrence.
+
+    Attributes:
+        id: Unique identifier for the exception entry.
+        lecturer_id: ID of the lecturer who owns this exception.
+        exception_date: The specific date to skip (YYYY-MM-DD as a date object).
+        start_time: The template slot time to skip in HH:MM format.
+    """
+
+    id: int
+    lecturer_id: int
+    exception_date: date
+    start_time: str  # HH:MM format
+
+
 class SlotUnavailableError(Exception):
     """Raised when a student attempts to book a time slot that already has an accepted booking."""
 

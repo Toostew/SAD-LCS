@@ -1,237 +1,330 @@
 """
-availability_view.py - Lecturer availability management view.
+availability_view.py - Lecturer weekly template management view.
 
 This module provides the availability management interface where lecturers can
-view their existing time slots, add new 1-hour consultation slots by selecting
-a date and start time, and delete slots that have no active bookings.
+define recurring weekly consultation slots (by day-of-week and time), manage
+exceptions for specific dates, and view a summary of their template.
 """
 
 import flet as ft
-from datetime import datetime, date as date_type
+from datetime import datetime
 
-from frontend.components.time_slot_card import time_slot_card
 from frontend.components.notification_bar import show_notification
 
 
 # Fixed hour options for the time picker (8:00 through 17:00)
 HOUR_OPTIONS = [f"{h:02d}:00" for h in range(8, 18)]
 
+# Day names indexed by weekday number (0=Monday, 4=Friday)
+DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
-def availability_view(page: ft.Page, user, availability_service):
+
+def availability_view(page: ft.Page, user, availability_service, booking_service=None, user_repo_module=None):
     """
-    Builds and returns the availability management view for a lecturer.
+    Builds and returns the weekly template management view for a lecturer.
 
-    Displays existing time slots grouped by date with delete capability, and
-    provides a form to add new 1-hour time slots using a date picker and a
-    dropdown for selecting the start hour.
+    Displays the weekly schedule template organized by weekday, allowing
+    lecturers to add/remove recurring time slots. Also shows an exceptions
+    section for marking specific dates as unavailable.
 
     Parameters:
         page (ft.Page): The Flet page instance for rendering and updates.
         user: The authenticated User object (lecturer) whose availability is managed.
-        availability_service: An AvailabilityService instance for CRUD operations on time slots.
+        availability_service: An AvailabilityService instance for template operations.
+        booking_service: Optional BookingService instance (unused in template view).
+        user_repo_module: Optional user_repo module (unused in template view).
 
     Returns:
         ft.Column: The complete availability management view as a Flet Column control.
     """
-    # Container that holds the list of existing time slot cards
-    slots_list = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO)
+    # Container for the weekly template grid
+    template_container = ft.Column(spacing=5)
 
-    # State for the add-slot form
-    selected_date = ft.Ref[ft.TextField]()
-    selected_time = ft.Ref[ft.Dropdown]()
+    # Container for the exceptions list
+    exceptions_container = ft.Column(spacing=5)
 
-    def load_slots():
-        """
-        Fetches the lecturer's time slots from the service and rebuilds the slots list.
+    def load_template():
+        """Fetches and renders the weekly template grid."""
+        templates = availability_service.get_weekly_templates(user.id)
+        template_container.controls.clear()
 
-        Groups time slots by date and renders each slot using the time_slot_card
-        component with a delete callback. Shows a placeholder message if no slots exist.
+        # Group templates by day of week
+        grouped = {i: [] for i in range(5)}
+        for t in templates:
+            grouped[t.day_of_week].append(t)
 
-        Returns:
-            None
-        """
-        slots = availability_service.get_lecturer_availability(user.id)
-        slots_list.controls.clear()
+        for day_index in range(5):
+            day_templates = grouped[day_index]
+            day_name = DAY_NAMES[day_index]
 
-        if not slots:
-            slots_list.controls.append(
-                ft.Container(
-                    content=ft.Text(
-                        "No availability set. Add time slots using the form below.",
-                        size=14,
-                        color=ft.Colors.GREY_600,
-                        italic=True,
+            # Build slot chips for this day
+            slot_chips = []
+            for t in day_templates:
+                end_hour = int(t.start_time.split(":")[0]) + 1
+                end_time_str = f"{end_hour:02d}:00"
+                chip = ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Text(f"{t.start_time}-{end_time_str}", size=13),
+                            ft.IconButton(
+                                icon=ft.Icons.CLOSE,
+                                icon_size=14,
+                                tooltip="Remove",
+                                on_click=lambda e, tid=t.id: handle_remove_template(tid),
+                            ),
+                        ],
+                        spacing=2,
+                        tight=True,
                     ),
-                    padding=20,
+                    bgcolor=ft.Colors.BLUE_50,
+                    border_radius=ft.BorderRadius.all(4),
+                    padding=ft.Padding.symmetric(horizontal=8, vertical=2),
                 )
-            )
-        else:
-            # Group slots by date for organized display
-            grouped = {}
-            for slot in slots:
-                slot_date = slot.date
-                if slot_date not in grouped:
-                    grouped[slot_date] = []
-                grouped[slot_date].append(slot)
+                slot_chips.append(chip)
 
-            # Render each date group with a header and its slot cards
-            for slot_date in sorted(grouped.keys()):
-                date_header = slot_date.strftime("%A, %d %B %Y") if hasattr(slot_date, "strftime") else str(slot_date)
-                slots_list.controls.append(
-                    ft.Text(date_header, size=14, weight=ft.FontWeight.BOLD)
+            # "Add" button for this day
+            add_btn = ft.TextButton(
+                "+ Add",
+                on_click=lambda e, d=day_index: open_add_template_dialog(d),
+            )
+
+            # None indicator if no slots
+            if not slot_chips:
+                slot_chips.append(
+                    ft.Text("(none)", italic=True, size=13, color=ft.Colors.GREY_500)
                 )
-                date_slots_row = ft.Row(
-                    controls=[
-                        time_slot_card(slot, status="available", on_delete=lambda s: handle_delete(s))
-                        for slot in grouped[slot_date]
-                    ],
-                    wrap=True,
-                    spacing=10,
-                )
-                slots_list.controls.append(date_slots_row)
+
+            day_row = ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Text(day_name, size=14, weight=ft.FontWeight.W_500),
+                        width=100,
+                    ),
+                    *slot_chips,
+                    add_btn,
+                ],
+                spacing=8,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                wrap=True,
+            )
+            template_container.controls.append(day_row)
 
         page.update()
 
-    def handle_delete(slot):
-        """
-        Handles the deletion of a time slot.
+    def load_exceptions():
+        """Fetches and renders the exceptions list."""
+        exceptions = availability_service.get_exceptions(user.id)
+        exceptions_container.controls.clear()
 
-        Calls the availability service to remove the slot. Shows a success
-        notification and refreshes the list on success, or an error notification
-        if the slot has active bookings and cannot be deleted.
-
-        Parameters:
-            slot: The TimeSlot instance to delete.
-
-        Returns:
-            None
-        """
-        success = availability_service.remove_time_slot(slot.id)
-        if success:
-            show_notification(page, "Time slot removed successfully.", type="success")
-            load_slots()
+        if not exceptions:
+            exceptions_container.controls.append(
+                ft.Text("No exceptions set.", italic=True, size=13, color=ft.Colors.GREY_500)
+            )
         else:
-            show_notification(
-                page,
-                "Cannot delete this slot — it has pending or accepted bookings.",
-                type="error",
-            )
+            for exc in exceptions:
+                end_hour = int(exc.start_time.split(":")[0]) + 1
+                end_time_str = f"{end_hour:02d}:00"
+                exc_row = ft.Row(
+                    controls=[
+                        ft.Text(
+                            f"\u2022 {exc.exception_date.strftime('%Y-%m-%d')} "
+                            f"({DAY_NAMES[exc.exception_date.weekday()]}) "
+                            f"{exc.start_time}-{end_time_str}",
+                            size=13,
+                        ),
+                        ft.TextButton(
+                            "Remove",
+                            on_click=lambda e, eid=exc.id: handle_remove_exception(eid),
+                        ),
+                    ],
+                    spacing=8,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                )
+                exceptions_container.controls.append(exc_row)
 
-    def handle_add(e):
-        """
-        Handles the addition of a new time slot.
+        page.update()
 
-        Reads the selected date and start time from the form, validates inputs,
-        constructs a start_time datetime, and calls the availability service to
-        create the slot. Shows appropriate notifications and refreshes the list.
+    def handle_remove_template(template_id):
+        """Removes a weekly template slot and refreshes the view."""
+        availability_service.remove_weekly_template(template_id)
+        show_notification(page, "Template slot removed.", type="success")
+        load_template()
 
-        Parameters:
-            e: The Flet click event from the Add Slot button.
+    def handle_remove_exception(exception_id):
+        """Removes an exception and refreshes the view."""
+        availability_service.remove_exception(exception_id)
+        show_notification(page, "Exception removed.", type="success")
+        load_exceptions()
 
-        Returns:
-            None
-        """
-        date_value = selected_date.current.value
-        time_value = selected_time.current.value
+    def open_add_template_dialog(day_index):
+        """Opens a dialog to add a time slot for the given day of week."""
+        time_dropdown = ft.Dropdown(
+            label="Start Time",
+            width=150,
+            options=[ft.dropdown.Option(h) for h in HOUR_OPTIONS],
+        )
 
-        # Validate that both fields are filled
-        if not date_value or not date_value.strip():
-            show_notification(page, "Please select a date.", type="warning")
+        error_text = ft.Text("", color=ft.Colors.RED, visible=False)
+
+        def on_submit(e):
+            time_value = time_dropdown.value
+            if not time_value:
+                error_text.value = "Please select a time."
+                error_text.visible = True
+                page.update()
+                return
+
+            availability_service.add_weekly_template(user.id, day_index, time_value)
+            page.pop_dialog()
+            show_notification(page, f"Added {time_value} on {DAY_NAMES[day_index]}.", type="success")
+            load_template()
+
+        def on_cancel(e):
+            page.pop_dialog()
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(f"Add Slot - {DAY_NAMES[day_index]}"),
+            content=ft.Column(
+                controls=[
+                    ft.Text("Select a start time for the 1-hour consultation slot:"),
+                    time_dropdown,
+                    error_text,
+                ],
+                tight=True,
+                spacing=10,
+            ),
+            actions=[
+                ft.TextButton("Cancel", on_click=on_cancel),
+                ft.ElevatedButton("Add", on_click=on_submit),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        page.show_dialog(dialog)
+
+    def open_add_exception_dialog(e):
+        """Opens a dialog to add a new exception (date + time to skip)."""
+        # Get current templates to show valid time options
+        templates = availability_service.get_weekly_templates(user.id)
+
+        if not templates:
+            show_notification(page, "No template slots to create exceptions for.", type="warning")
             return
-        if not time_value:
-            show_notification(page, "Please select a start time.", type="warning")
-            return
 
-        try:
-            # Parse the date string (expected format: YYYY-MM-DD)
-            slot_date = datetime.strptime(date_value.strip(), "%Y-%m-%d").date()
-        except ValueError:
-            show_notification(page, "Invalid date format. Use YYYY-MM-DD.", type="error")
-            return
+        # Collect unique times from templates
+        unique_times = sorted(set(t.start_time for t in templates))
 
-        # Parse the hour from the selected time option
-        hour = int(time_value.split(":")[0])
-        start_time = datetime(slot_date.year, slot_date.month, slot_date.day, hour, 0, 0)
+        date_field = ft.TextField(
+            label="Date (YYYY-MM-DD)",
+            hint_text="Click calendar to pick",
+            read_only=True,
+            width=200,
+        )
 
-        try:
-            availability_service.create_time_slot(
-                lecturer_id=user.id,
-                slot_date=slot_date,
-                start_time=start_time,
-            )
-            show_notification(page, "Time slot added successfully.", type="success")
-            # Clear the form fields after successful add
-            selected_date.current.value = ""
-            selected_time.current.value = None
-            load_slots()
-        except ValueError as ex:
-            show_notification(page, f"Error: {ex}", type="error")
+        time_dropdown = ft.Dropdown(
+            label="Time Slot to Skip",
+            width=150,
+            options=[ft.dropdown.Option(t) for t in unique_times],
+        )
 
-    def on_date_picked(e):
-        """
-        Handles the date picker result and updates the date text field.
+        error_text = ft.Text("", color=ft.Colors.RED, visible=False)
 
-        Formats the picked date as YYYY-MM-DD and writes it into the date
-        input field for display and later use.
+        picked_date = {"value": None}
 
-        Parameters:
-            e: The Flet DatePicker change event containing the selected date.
+        def on_date_picked(e):
+            if e.control.value:
+                picked = e.control.value
+                picked_date["value"] = picked
+                date_field.value = picked.strftime("%Y-%m-%d")
+                page.update()
 
-        Returns:
-            None
-        """
-        if e.control.value:
-            picked = e.control.value
-            selected_date.current.value = picked.strftime("%Y-%m-%d")
-            page.update()
+        date_picker = ft.DatePicker(
+            first_date=datetime.now(),
+            on_change=on_date_picked,
+        )
 
-    # Build the date picker
-    date_picker = ft.DatePicker(
-        first_date=datetime.now(),
-        on_change=on_date_picked,
-    )
+        def on_pick_date(e):
+            page.show_dialog(date_picker)
 
-    # Date input field with a calendar icon button to open the picker
-    date_field = ft.TextField(
-        ref=selected_date,
-        label="Date (YYYY-MM-DD)",
-        hint_text="Click calendar to pick",
-        read_only=True,
-        width=200,
-    )
+        def on_submit(e):
+            if not date_field.value or not date_field.value.strip():
+                error_text.value = "Please select a date."
+                error_text.visible = True
+                page.update()
+                return
 
-    date_pick_button = ft.IconButton(
-        icon=ft.Icons.CALENDAR_MONTH,
-        tooltip="Pick a date",
-        on_click=lambda e: page.show_dialog(date_picker),
-    )
+            if not time_dropdown.value:
+                error_text.value = "Please select a time slot to skip."
+                error_text.visible = True
+                page.update()
+                return
 
-    # Dropdown for selecting the start time hour
-    time_dropdown = ft.Dropdown(
-        ref=selected_time,
-        label="Start Time",
-        width=150,
-        options=[ft.dropdown.Option(h) for h in HOUR_OPTIONS],
-    )
+            try:
+                exc_date = datetime.strptime(date_field.value.strip(), "%Y-%m-%d").date()
+            except ValueError:
+                error_text.value = "Invalid date format."
+                error_text.visible = True
+                page.update()
+                return
 
-    # Add Slot button
-    add_button = ft.ElevatedButton(
-        "Add Slot",
-        icon=ft.Icons.ADD,
-        on_click=handle_add,
-    )
+            # Validate that this date's weekday matches a template with the chosen time
+            day_of_week = exc_date.weekday()
+            matching = [t for t in templates if t.day_of_week == day_of_week and t.start_time == time_dropdown.value]
+            if not matching:
+                error_text.value = (
+                    f"No template slot for {time_dropdown.value} on "
+                    f"{DAY_NAMES[day_of_week] if day_of_week < 5 else 'weekend'}."
+                )
+                error_text.visible = True
+                page.update()
+                return
 
-    # Assemble the add-slot form row
-    add_form = ft.Row(
-        controls=[
-            date_field,
-            date_pick_button,
-            time_dropdown,
-            add_button,
-        ],
-        alignment=ft.MainAxisAlignment.START,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        spacing=10,
+            availability_service.add_exception(user.id, exc_date, time_dropdown.value)
+            page.pop_dialog()
+            show_notification(page, "Exception added.", type="success")
+            load_exceptions()
+
+        def on_cancel(e):
+            page.pop_dialog()
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Add Exception"),
+            content=ft.Column(
+                controls=[
+                    ft.Text("Mark a specific date and time as unavailable:"),
+                    ft.Row(
+                        controls=[
+                            date_field,
+                            ft.IconButton(
+                                icon=ft.Icons.CALENDAR_MONTH,
+                                tooltip="Pick a date",
+                                on_click=on_pick_date,
+                            ),
+                        ],
+                        spacing=5,
+                    ),
+                    time_dropdown,
+                    error_text,
+                ],
+                tight=True,
+                spacing=10,
+            ),
+            actions=[
+                ft.TextButton("Cancel", on_click=on_cancel),
+                ft.ElevatedButton("Add Exception", on_click=on_submit),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        page.show_dialog(dialog)
+
+    # Add Exception button
+    add_exception_btn = ft.TextButton(
+        "+ Add Exception",
+        icon=ft.Icons.EVENT_BUSY,
+        on_click=open_add_exception_dialog,
     )
 
     # Build the complete view layout
@@ -239,18 +332,31 @@ def availability_view(page: ft.Page, user, availability_service):
         controls=[
             ft.Text("My Availability", size=20, weight=ft.FontWeight.BOLD),
             ft.Divider(height=1),
-            ft.Text("Add New Time Slot", size=16, weight=ft.FontWeight.W_500),
-            add_form,
+            ft.Text("Weekly Schedule Template", size=16, weight=ft.FontWeight.W_500),
+            ft.Text(
+                "Define your recurring consultation slots. Students will see "
+                "these auto-generated for the next 14 days.",
+                size=12,
+                color=ft.Colors.GREY_600,
+            ),
+            template_container,
             ft.Divider(height=1),
-            ft.Text("Existing Time Slots", size=16, weight=ft.FontWeight.W_500),
-            slots_list,
+            ft.Text("Exceptions (days you're not available)", size=16, weight=ft.FontWeight.W_500),
+            ft.Text(
+                "Mark specific dates where you won't be available despite your template.",
+                size=12,
+                color=ft.Colors.GREY_600,
+            ),
+            exceptions_container,
+            add_exception_btn,
         ],
-        spacing=15,
+        spacing=12,
         expand=True,
         scroll=ft.ScrollMode.AUTO,
     )
 
-    # Load existing slots on initial render
-    load_slots()
+    # Load data on initial render
+    load_template()
+    load_exceptions()
 
     return view

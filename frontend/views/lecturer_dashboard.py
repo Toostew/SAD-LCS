@@ -74,6 +74,8 @@ def lecturer_dashboard(
                 page=page,
                 user=user,
                 availability_service=availability_service,
+                booking_service=booking_service,
+                user_repo_module=user_repo_module,
             )
         elif index == 1:
             # Booking Requests — view queue, accept/decline, propose edits

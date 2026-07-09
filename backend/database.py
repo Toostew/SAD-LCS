@@ -131,6 +131,30 @@ def init_db():
             )
         """)
 
+        # Create weekly_templates table for recurring availability
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS weekly_templates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                lecturer_id INTEGER NOT NULL,
+                day_of_week INTEGER NOT NULL CHECK(day_of_week BETWEEN 0 AND 4),
+                start_time TEXT NOT NULL,
+                FOREIGN KEY (lecturer_id) REFERENCES users(id),
+                UNIQUE(lecturer_id, day_of_week, start_time)
+            )
+        """)
+
+        # Create availability_exceptions table for skipping specific dates
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS availability_exceptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                lecturer_id INTEGER NOT NULL,
+                exception_date TEXT NOT NULL,
+                start_time TEXT NOT NULL,
+                FOREIGN KEY (lecturer_id) REFERENCES users(id),
+                UNIQUE(lecturer_id, exception_date, start_time)
+            )
+        """)
+
         # Create indexes for common booking queries
         conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_bookings_slot_status

@@ -12,13 +12,13 @@ import flet as ft
 from frontend.components.notification_bar import show_notification
 
 
-def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot_repo):
+def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot_repo, booking_service=None, availability_service=None):
     """
     Builds and returns the edit proposal response view for students.
 
     Fetches all pending edit proposals for the authenticated student and renders
     them as cards showing original booking details vs proposed changes. Each card
-    has Accept and Decline buttons that invoke the EditProposalService accordingly.
+    has Accept, Accept & Edit Place, and Decline buttons.
 
     Parameters:
         page: The Flet Page object for rendering and updating the UI.
@@ -26,6 +26,7 @@ def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot
         edit_proposal_service: The EditProposalService instance for accepting/declining proposals.
         booking_repo: The BookingRepository instance for fetching original booking details.
         timeslot_repo: The TimeSlotRepository instance for fetching time slot details.
+        booking_service: Optional BookingService instance for editing bookings after acceptance.
 
     Returns:
         ft.Column: A Flet Column control containing the full edit proposal view.
@@ -185,6 +186,104 @@ def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot
             show_notification(page, "Proposal declined. Booking unchanged.", type="info")
             load_proposals()
 
+        def on_counter_propose(e, prop=proposal, bk=booking):
+            """
+            Opens a dialog for the student to counter-propose changes.
+
+            Allows the student to pick a different time slot from the lecturer's
+            available slots and/or modify the place before accepting.
+
+            Parameters:
+                e: The Flet click event object.
+                prop: The EditProposal instance.
+                bk: The original Booking instance.
+            """
+            # Get available slots for this lecturer
+            available_slots = []
+            if availability_service:
+                all_slots = availability_service.generate_slots_for_student(bk.lecturer_id)
+                for s in all_slots:
+                    slot_status = booking_service.get_slot_status(s.id) if booking_service else "available"
+                    if slot_status != "taken" or s.id == bk.time_slot_id:
+                        available_slots.append(s)
+
+            # Build time slot dropdown options
+            slot_options = []
+            proposed_slot_id = prop.proposed_time_slot_id if prop.proposed_time_slot_id else bk.time_slot_id
+            for s in available_slots:
+                label = f"{s.date.strftime('%Y-%m-%d')} | {s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')}"
+                if s.id == bk.time_slot_id:
+                    label += " (original)"
+                elif prop.proposed_time_slot_id and s.id == prop.proposed_time_slot_id:
+                    label += " (proposed)"
+                slot_options.append(ft.dropdown.Option(key=str(s.id), text=label))
+
+            time_slot_dropdown = ft.Dropdown(
+                label="Time Slot",
+                width=350,
+                value=str(proposed_slot_id),
+                options=slot_options,
+            ) if slot_options else None
+
+            counter_place_field = ft.TextField(
+                label="Consultation Place",
+                value=prop.proposed_place if prop.proposed_place else bk.place,
+                hint_text="e.g. Room 301, Library, Online",
+                width=350,
+            )
+
+            def on_submit_counter(e):
+                new_place = counter_place_field.value.strip() if counter_place_field.value else ""
+                if not new_place:
+                    show_notification(page, "Place cannot be empty.", type="warning")
+                    return
+
+                # Accept the proposal first (applies the lecturer's changes)
+                edit_proposal_service.accept_proposal(prop.id)
+
+                # Then override with the student's preferences
+                updated_booking = booking_repo.find_by_id(bk.id)
+                if time_slot_dropdown and time_slot_dropdown.value:
+                    updated_booking.time_slot_id = int(time_slot_dropdown.value)
+                updated_booking.place = new_place
+                booking_repo.update(updated_booking)
+
+                page.pop_dialog()
+                show_notification(page, "Proposal accepted with your changes.", type="success")
+                load_proposals()
+
+            def on_cancel_counter(e):
+                page.pop_dialog()
+
+            # Build dialog content
+            content_controls = [
+                ft.Text("Accept the proposal but make your own adjustments:"),
+            ]
+            if time_slot_dropdown:
+                content_controls.append(time_slot_dropdown)
+            else:
+                content_controls.append(
+                    ft.Text("No other time slots available.", italic=True, color=ft.Colors.GREY_600)
+                )
+            content_controls.append(ft.Divider(height=1))
+            content_controls.append(counter_place_field)
+
+            dialog = ft.AlertDialog(
+                modal=True,
+                title=ft.Text("Accept & Edit"),
+                content=ft.Column(
+                    controls=content_controls,
+                    tight=True,
+                    spacing=10,
+                ),
+                actions=[
+                    ft.TextButton("Cancel", on_click=on_cancel_counter),
+                    ft.ElevatedButton("Accept with Changes", on_click=on_submit_counter),
+                ],
+                actions_alignment=ft.MainAxisAlignment.END,
+            )
+            page.show_dialog(dialog)
+
         # Action buttons row
         action_buttons = ft.Row(
             controls=[
@@ -195,6 +294,11 @@ def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot
                     bgcolor=ft.Colors.GREEN,
                     on_click=on_accept,
                 ),
+                ft.TextButton(
+                    "Accept & Edit Place",
+                    icon=ft.Icons.EDIT,
+                    on_click=on_counter_propose,
+                ),
                 ft.OutlinedButton(
                     "Decline",
                     icon=ft.Icons.CLOSE,
@@ -202,6 +306,7 @@ def edit_proposal_view(page, user, edit_proposal_service, booking_repo, timeslot
                 ),
             ],
             spacing=10,
+            wrap=True,
         )
 
         # Assemble the card

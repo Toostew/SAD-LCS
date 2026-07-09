@@ -57,8 +57,8 @@ def booking_view(page, user, booking_service, availability_service, user_repo_mo
             page.update()
             return
 
-        # Retrieve all time slots for the selected lecturer
-        time_slots = availability_service.get_lecturer_availability(selected_lecturer["id"])
+        # Generate concrete time slots for the next 14 days from the lecturer's template
+        time_slots = availability_service.generate_slots_for_student(selected_lecturer["id"])
 
         if not time_slots:
             slots_container.controls.append(

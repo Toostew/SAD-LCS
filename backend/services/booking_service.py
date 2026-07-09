@@ -266,3 +266,37 @@ class BookingService:
             An integer count of accepted bookings for the lecturer on that date.
         """
         return self.booking_repo.count_accepted_on_date(lecturer_id, target_date)
+
+    # ──────────────────────────────────────────────
+    # Student cancellation
+    # ──────────────────────────────────────────────
+
+    def cancel_booking(self, booking_id: int, student_id: int) -> Booking:
+        """
+        Cancels a student's own pending booking.
+
+        Only pending bookings can be cancelled by the student. The booking must
+        belong to the requesting student. On success, the booking status is set
+        to DECLINED (student-initiated cancellation).
+
+        Parameters:
+            booking_id: The ID of the booking to cancel.
+            student_id: The ID of the student requesting the cancellation.
+
+        Returns:
+            The updated Booking instance with status=DECLINED.
+
+        Raises:
+            ValueError: If the booking is not found, does not belong to the
+                        student, or is not in PENDING status.
+        """
+        booking = self.booking_repo.find_by_id(booking_id)
+        if booking is None:
+            raise ValueError("Booking not found.")
+        if booking.student_id != student_id:
+            raise ValueError("This booking does not belong to you.")
+        if booking.status != BookingStatus.PENDING:
+            raise ValueError("Only pending bookings can be cancelled.")
+
+        booking.status = BookingStatus.DECLINED
+        return self.booking_repo.update(booking)
